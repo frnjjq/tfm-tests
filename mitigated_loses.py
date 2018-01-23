@@ -1,20 +1,22 @@
 """
-burst_loses.py
+mitigated_loses.py
 
 This script simulates what would happen in case of burst looses of an 
-image.The number of burst and the lenght is configurable. The lenght can be
-random in a range, the possition will be always random. Some groups of 
-scanlines are lost and those are interpolated later on using the 
-ones rest in place.The interpolation to recover the image lost is bilinear.
+image and mitigation strough interlevaing is used.The number of burst 
+and the lenght is configurable. The lenght can berandom in a range, 
+the possition will be always random. Some groups of scanlines are lost
+and those are interpolated later on using the ones rest in place.The 
+interpolation to recover the image lost is bilinear.
 
 To use modify the variables under settings:
 number_burst      ->to configure number fo bursts that will degradate the image.
 min_burst_lenght  ->to configure the minimun lenght of the burst.
 max_burst_lenght  ->to configure the máximum lenght of the burst.
+interleaving_distance ->to configure the distance in the interleaving pattern.
 img_path          ->to indicate where to take the original image.
 result_path       ->to configure the path to leave the degradated image.
 
-
+PSNR function adapted from https://github.com/magonzalezc/PSNRtool.
 
 Francisco José Juaan Quintanilla, Jan-2018
 See LICENSE.md in the root of the repository
@@ -26,11 +28,12 @@ from PIL import Image
 from psnr import print_psnr
 
 #Settings
-number_burst = 5 # Number of bursts that ocur
-min_burst_lenght = 20 # Minimum lenght of the bursts
+number_burst = 10 # Number of bursts that ocur
+min_burst_lenght = 50 # Minimum lenght of the bursts
 max_burst_lenght = 100  # Maximum lenght of the bursts
+interleaving_distance=8 # Dsitance setted in the interleaving pattern
 img_path = "img/ref/lena.bmp" #Path of the img of line looses
-result_path = "img/out/lena_burst.bmp" #Path of the img of line looses
+result_path = "img/out/lena_mitigated.bmp" #Path of the img of line looses
 
 ###############################
 #Start of the script
@@ -50,10 +53,11 @@ scalines_available = list(range(0, width))
 for x in range(0, number_burst):
     possition = random.randint(0, width-1)
     lenght = random.randint(min_burst_lenght, max_burst_lenght)
-    for i in range(possition, possition+lenght):
-        if scalines_available.count(i) :
-            scanlines_lost.append(i)
-            scalines_available.remove(i)
+    for i in range(0, lenght):
+        scanline=possition+i*interleaving_distance
+        if scalines_available.count(scanline) :
+            scanlines_lost.append(scanline)
+            scalines_available.remove(scanline)
 
 print("There are", len(scanlines_lost), "scanlines that has been lost a total of", (len(scanlines_lost)/height)*100,"% hasbeen lost" )
 scalines_available.sort()
