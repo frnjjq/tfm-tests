@@ -3,8 +3,6 @@ testing-horiz-discard.py
 
 Testing for horizontal interpolation of lost scanlines.
 
-PSNR function adapted from https://github.com/magonzalezc/PSNRtool.
-
 Francisco José Juaan Quintanilla, Jul-2018
 See LICENSE.md in the root of the repository
 """
@@ -14,9 +12,9 @@ from psnr import print_psnr
 
 #Settings
 lines_lost = 2 #Distance between preserved scalines
-img_path = "img/ref/test1.png" #Path of the img of line looses
-result_path = "img/out/test1_1.png" #Path of the img of line looses
-mode = 1 # 
+img_path = "img/ref/lena_128.bmp" #Path of the img of line looses
+result_path = "img/out/lena_128_2.png" #Path of the img of line looses
+mode = 2 # 
 
 ###############################
 #Start of the script
@@ -51,6 +49,30 @@ for line in range(height - (height-1)%lines_lost):
                 distance_tilt_right = abs(data[pix+(width*next_line)-1][0] - data[pix-(width*prev_line)+1][0])
 
                 if distance_tilt_left <= distance_horizontal and distance_horizontal <= distance_tilt_right:
+                    newdata[0] = int((data[pix+(width*next_line)+1][0]*prev_line + data[pix-(width*prev_line)-1][0]*next_line) / lines_lost)
+                    newdata[1] = int((data[pix+(width*next_line)+1][1]*prev_line + data[pix-(width*prev_line)-1][1]*next_line) / lines_lost)
+                    newdata[2] = int((data[pix+(width*next_line)+1][2]*prev_line + data[pix-(width*prev_line)-1][2]*next_line) / lines_lost)
+                elif distance_tilt_right <= distance_horizontal and distance_horizontal <= distance_tilt_left:
+                    newdata[0] = int((data[pix+(width*next_line)-1][0]*prev_line + data[pix-(width*prev_line)+1][0]*next_line) / lines_lost)
+                    newdata[1] = int((data[pix+(width*next_line)-1][1]*prev_line + data[pix-(width*prev_line)+1][1]*next_line) / lines_lost)
+                    newdata[2] = int((data[pix+(width*next_line)-1][2]*prev_line + data[pix-(width*prev_line)+1][2]*next_line) / lines_lost)            
+                else:
+                    newdata[0] = int((data[pix+(width*next_line)][0]*prev_line + data[pix-(width*prev_line)][0]*next_line) / lines_lost)
+                    newdata[1] = int((data[pix+(width*next_line)][1]*prev_line + data[pix-(width*prev_line)][1]*next_line) / lines_lost)
+                    newdata[2] = int((data[pix+(width*next_line)][2]*prev_line + data[pix-(width*prev_line)][2]*next_line) / lines_lost)      
+                data[pix] = tuple(newdata)
+        elif mode == 2:
+            for pix in range(width*line +1, width*line + width -1):
+                newdata = [0, 0, 0]
+                distance_horizontal = abs(data[pix+(width*next_line)][0] - data[pix-(width*prev_line)][0])
+                distance_tilt_left = abs(data[pix+(width*next_line)+1][0] - data[pix-(width*prev_line)-1][0])
+                distance_tilt_right = abs(data[pix+(width*next_line)-1][0] - data[pix-(width*prev_line)+1][0])
+
+                if distance_horizontal <= distance_tilt_left*2 and distance_horizontal <= distance_tilt_right*2:
+                    newdata[0] = int((data[pix+(width*next_line)][0]*prev_line + data[pix-(width*prev_line)][0]*next_line) / lines_lost)
+                    newdata[1] = int((data[pix+(width*next_line)][1]*prev_line + data[pix-(width*prev_line)][1]*next_line) / lines_lost)
+                    newdata[2] = int((data[pix+(width*next_line)][2]*prev_line + data[pix-(width*prev_line)][2]*next_line) / lines_lost)              
+                elif distance_tilt_left <= distance_horizontal and distance_horizontal <= distance_tilt_right:
                     newdata[0] = int((data[pix+(width*next_line)+1][0]*prev_line + data[pix-(width*prev_line)-1][0]*next_line) / lines_lost)
                     newdata[1] = int((data[pix+(width*next_line)+1][1]*prev_line + data[pix-(width*prev_line)-1][1]*next_line) / lines_lost)
                     newdata[2] = int((data[pix+(width*next_line)+1][2]*prev_line + data[pix-(width*prev_line)-1][2]*next_line) / lines_lost)
