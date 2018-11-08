@@ -11,6 +11,7 @@ from psnr import print_psnr
 #Settings
 img_path = "img/ref/lena_128.bmp" #Path of the img
 result_path = "img/out/lena_128-edge.bmp" #Path of the img interpolated
+same_size = True #Same size image
 
 ###############################
 #Start of the script
@@ -133,4 +134,8 @@ res = Image.new(img.mode, [final_width, final_height])
 res.putdata(final_data)
 res = res.convert("RGB")
 print("Storing degradated image in", result_path)
-res.save(result_path)
+if same_size:
+    res2 = res.resize([width, height], Image.BILINEAR)
+    res2.save(result_path)
+else:
+    res.save(result_path)
