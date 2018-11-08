@@ -22,9 +22,10 @@ from PIL import Image
 from psnr import print_psnr
 
 #Settings
-looses = 0.5 #Percentage of line looses
+looses = 0.8 #Percentage of line looses
 img_path = "img/ref/lena.bmp" #Path of the img of line looses
 result_path = "img/out/lena-random.bmp" #Path of the img of line looses
+mode = 1
 
 ###############################
 #Start of the script
@@ -70,7 +71,7 @@ for scanline in scanlines_lost:
 
     #interpolate the line using the top and bot scanlines
 
-    for pix in range(int(width*scanline), int((width*scanline)+width)):
+    for pix in range(int(width*scanline), int((width*scanline)+width)-1):
         newdata = [0, 0, 0]
         if top_scanline == 0:
             newdata[0] = data[pix+(width*(bot_scanline))][0]
@@ -82,9 +83,27 @@ for scanline in scanlines_lost:
             newdata[1] = data[pix+(width*(top_scanline))][1]
             newdata[2] = data[pix+(width*(top_scanline))][2]
         else:
-            newdata[0] = int((data[pix+(width*(top_scanline))][0]*(-bot_scanline) + data[pix+(width*(bot_scanline))][0]*top_scanline) / (top_scanline-bot_scanline))
-            newdata[1] = int((data[pix+(width*(top_scanline))][1]*(-bot_scanline) + data[pix+(width*(bot_scanline))][1]*top_scanline) / (top_scanline-bot_scanline))
-            newdata[2] = int((data[pix+(width*(top_scanline))][2]*(-bot_scanline) + data[pix+(width*(bot_scanline))][2]*top_scanline) / (top_scanline-bot_scanline))      
+            if mode == 0:
+                newdata[0] = int((data[pix+width*top_scanline][0]*(-bot_scanline) + data[pix+width*bot_scanline][0]*top_scanline) / (top_scanline-bot_scanline))
+                newdata[1] = int((data[pix+width*top_scanline][1]*(-bot_scanline) + data[pix+width*bot_scanline][1]*top_scanline) / (top_scanline-bot_scanline))
+                newdata[2] = int((data[pix+width*top_scanline][2]*(-bot_scanline) + data[pix+width*bot_scanline][2]*top_scanline) / (top_scanline-bot_scanline))
+            elif mode == 1:
+                distance_horizontal = abs(data[pix+(width*top_scanline)][0] - data[pix+(width*bot_scanline)][0])
+                distance_tilt_left = abs(data[pix+(width*top_scanline)+1][0] - data[pix+(width*bot_scanline)-1][0])
+                distance_tilt_right = abs(data[pix+(width*top_scanline)-1][0] - data[pix+(width*bot_scanline)+1][0])
+
+                if distance_tilt_left <= distance_horizontal and distance_horizontal <= distance_tilt_right:
+                    newdata[0] = int((data[pix+(width*top_scanline)+1][0]*(-bot_scanline) + data[pix+(width*bot_scanline)-1][0]*top_scanline) / (top_scanline-bot_scanline))
+                    newdata[1] = int((data[pix+(width*top_scanline)+1][1]*(-bot_scanline) + data[pix+(width*bot_scanline)-1][1]*top_scanline) / (top_scanline-bot_scanline))
+                    newdata[2] = int((data[pix+(width*top_scanline)+1][2]*(-bot_scanline) + data[pix+(width*bot_scanline)-1][2]*top_scanline) / (top_scanline-bot_scanline))
+                elif distance_tilt_right <= distance_horizontal and distance_horizontal <= distance_tilt_left:
+                    newdata[0] = int((data[pix+(width*top_scanline)-1][0]*(-bot_scanline) + data[pix+(width*bot_scanline)+1][0]*top_scanline) / (top_scanline-bot_scanline))
+                    newdata[1] = int((data[pix+(width*top_scanline)-1][1]*(-bot_scanline) + data[pix+(width*bot_scanline)+1][1]*top_scanline) / (top_scanline-bot_scanline))
+                    newdata[2] = int((data[pix+(width*top_scanline)-1][2]*(-bot_scanline) + data[pix+(width*bot_scanline)+1][2]*top_scanline) / (top_scanline-bot_scanline))
+                else:
+                    newdata[0] = int((data[pix+(width*top_scanline)][0]*(-bot_scanline) + data[pix+(width*bot_scanline)][0]*top_scanline) / (top_scanline-bot_scanline))
+                    newdata[1] = int((data[pix+(width*top_scanline)][1]*(-bot_scanline) + data[pix+(width*bot_scanline)][1]*top_scanline) / (top_scanline-bot_scanline))
+                    newdata[2] = int((data[pix+(width*top_scanline)][2]*(-bot_scanline) + data[pix+(width*bot_scanline)][2]*top_scanline) / (top_scanline-bot_scanline)) 
         data[pix] = tuple(newdata)
 
 #Save back to the file
