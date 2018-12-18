@@ -11,7 +11,6 @@ See LICENSE.md in the root of the repository
 
 import math
 import sys
-import numpy as np
 from PIL import Image
 
 def print_psnr(original_data, degradated_data):
@@ -21,15 +20,25 @@ def print_psnr(original_data, degradated_data):
     :param degradated_data: As Pillow gives it with getdata
     :return:
     """
-    psnr_y, psnr_cb, psnr_cr = psnr_np(original_data, degradated_data)
-    print('Y =', psnr_y, 'Cb =', psnr_cb, 'Cr =', psnr_cr)
+    psnr_y, psnr_cb, psnr_cr, psnr_avg = psnr(original_data, degradated_data)
+    print('Y=', psnr_y, 'Cb=', psnr_cb, 'Cr=', psnr_cr,'Avg=',psnr_avg)
 
 def psnr(original_data, degradated_data):
     """
     This calculates the Peak Signal to Noise Ratio (PSNR).
     :param original_data: As Pillow gives it with getdata
     :param degradated_data: As Pillow gives it with getdata
-    :return:
+    :return: List containing the PSNR in Y, U, V and average of those 3
+    """
+    mse_y, mse_cb, mse_cr, mse_avg = mse(original_data, degradated_data)
+    return psnr_from_mse([mse_y, mse_cb, mse_cr, mse_avg])
+
+def mse(original_data, degradated_data):
+    """
+    This calculates the Mean Squared Error (MSE)
+    :param original_data: As Pillow gives it with getdata
+    :param degradated_data: As Pillow gives it with getdata
+    :return: List containing the MSE in Y, U, V and average of those 3
     """
     error_y = 0
     error_cb = 0
@@ -46,49 +55,24 @@ def psnr(original_data, degradated_data):
     mse_y = error_y / len(original_data)
     mse_cb = error_cb / len(original_data)
     mse_cr = error_cr / len(original_data)
+    mse_avg = (mse_y*4 + mse_cb + mse_cr)/6
 
-    if mse_y != 0:
-        psnr_y = float(-10.0 * math.log(mse_y / (255 * 255), 10))
-    else:
-        psnr_y = 0
+    return [mse_y, mse_cb, mse_cr, mse_avg]
 
-    if mse_cb != 0:
-        psnr_cb = float(-10.0 * math.log(mse_cb / (255 * 255), 10))
-    else:
-        psnr_cb = 0
-
-    if mse_cr != 0:
-        psnr_cr = float(-10.0 * math.log(mse_cr / (255 * 255), 10))
-    else:
-        psnr_cr = 0
-
-    return [psnr_y, psnr_cb, psnr_cr]
-    
-def psnr_np(original_data, degradated_data):
     """
-    This calculates the Peak Signal to Noise Ratio (PSNR) using numpy.
-    :param original_data: As Pillow gives it with getdata
-    :param degradated_data: As Pillow gives it with getdata
-    :return:
+    Obtains the PSNR for a list of MSE values
+    :param mse_list: A list of mse quantities
+    :return: List containing the PSNR. If MSE is 0 the output PSNR is infinite
     """
-    orig = np.array(original_data, dtype=np.int32) 
-    deg = np.array(degradated_data, dtype=np.int32) 
-    
-    diff = (orig - deg)**2
-    error = diff.sum(axis=0)
-    error = error.astype(np.float64)
-    mse = error / diff.shape[0]
-    psnr = 10 * np.log10((255*255)/mse)
+def psnr_from_mse(mse_list):
+    result = []
 
-    if math.isinf(psnr[0]):
-        psnr[0] = 100
-    if math.isinf(psnr[1]):
-        psnr[1] = 100
-    if math.isinf(psnr[2]):
-        psnr[2] = 100	
-	
-    return psnr[0], psnr[1], psnr[2]
-
+    for mse in mse_list:
+        if  mse != 0:
+            result.append(float(-10.0 * math.log(mse / (255 * 255), 10)))
+        else:
+            result.append(float('Inf'))
+    return result
 
 if __name__ == "__main__":
 
